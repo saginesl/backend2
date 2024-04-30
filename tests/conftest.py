@@ -22,8 +22,6 @@ async def override_get_async_session() -> AsyncGenerator[AsyncSession,None]:
 
 app.dependency_overrides[get_db]=override_get_async_session
 
-
-
 @pytest.fixture(autouse=True,scope="session")
 async def test_db():
     async with engine_test.begin() as conn:
@@ -31,9 +29,6 @@ async def test_db():
     yield
     async with engine_test.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
-
-
-
 
 @pytest.fixture
 async def client() -> AsyncGenerator[AsyncClient,None]:
