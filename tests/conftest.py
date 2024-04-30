@@ -1,26 +1,17 @@
 import pytest
-from httpx import AsyncClient
-from typing import AsyncGenerator
-from database import get_db
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
-from sqlalchemy.orm import sessionmaker
-from main import app
-from models import Base
-from config import DB_PORT_TEST, DB_HOST_TEST, DB_NAME_TEST,DB_PASS_TEST,DB_USER_TEST
-from sqlalchemy.pool import NullPool
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker, declarative_base
+
+engine_test = create_engine('postgresql://postgres:1234@localhost/postgres')
+session_test = sessionmaker(autocommit=False, autoflush=False, bind=engine_test)
+Base = declarative_base()
 
 
-
-DATABASE_URL_TEST=f'postgresql+asyncpg://{DB_USER_TEST}:{DB_PASS_TEST}@{DB_HOST_TEST}:{DB_PORT_TEST}/{DB_NAME_TEST}'
-
-engine_test = create_async_engine(DATABASE_URL_TEST, echo=True,poolclass=NullPool)
-test_async_session = sessionmaker(engine_test, expire_on_commit=False, class_=AsyncSession)
-Base.metadata.bind=engine_test
-async def override_get_async_session() -> AsyncGenerator[AsyncSession,None]:
-    async with test_async_session() as session:
-        yield session
-
-app.dependency_overrides[get_db]=override_get_async_session
+@pytest.fixture(autouse=True, scope='session')
+async def prepare_database():
+    Base.metadata.create_all(bind=engine_test)
+    yield
+    Base.metadata.drop_all(bind=engine_test)
 
 @pytest.fixture(autouse=True,scope="session")
 async def test_db():

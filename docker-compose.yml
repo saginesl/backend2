@@ -1,13 +1,13 @@
 version: '3.8'
 services:
   db:
-    image: postgres:12-alpine
-    container_name: db_app3
-    environment:
-        POSTGRES_PASSWORD: postgres
+    image: postgres
+    container_name: db_app
+    command: -p 1221
     expose:
-      - 5432
-
+      - 1221
+    env_file:
+      - .env-non-dev
 
 
     restart: always
@@ -16,7 +16,7 @@ services:
     build: ./
     env_file:
       - .env-non-dev
-    container_name: fastapi_3
+    container_name: test_courier
     ports:
       - 7773:8000
     depends_on:

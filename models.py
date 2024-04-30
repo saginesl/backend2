@@ -1,33 +1,25 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, Identity
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime
 from sqlalchemy.orm import relationship, declarative_base
-from typing import Optional
-from pydantic import BaseModel,Field
-Base = declarative_base()
-class Author(Base):
-    __tablename__ = "authors"
+from sqlalchemy.sql import func
 
-    id = Column(Integer, primary_key=True)
-    name = Column(String, index=True, nullable=False)
-    books = relationship("Book", back_populates="author")
+Base=declarative_base()
+class Courier(Base):
+    __tablename__ = "couriers"
 
-class Book(Base):
-    __tablename__ = "books"
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(30), unique=True)
+    districts=Column(String)
+    avg_order_complete_time = Column(DateTime, default=func.now())
+    avg_day_orders = Column(Integer, default=0)
+    active_order = relationship("Order", back_populates="id_courier")
 
-    id = Column(Integer, Identity(start=1), primary_key=True)
-    title = Column(String, index=True, nullable=False)
-    author_id = Column(Integer, ForeignKey("authors.id"))
-    author = relationship("Author", back_populates="books")
+class Order(Base):
+    __tablename__ = "orders"
 
-class New_Response(BaseModel):
-    message: str
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String, index=True)
+    district = Column(String)
+    status = Column(Integer, default=1)  # 1 - в работе, 2 - завершен
 
-class BookCreate(BaseModel):
-    title: str
-    author_id: Optional[int] = Field(default=10, ge=10)
-
-class AuthorCreate(BaseModel):
-    name: str
-
-class AuthorModel(BaseModel):
-    name: str
-    id: Optional[int] = Field(default=10, ge=10)
+    courier_id = Column(Integer, ForeignKey("couriers.id"))
+    id_courier = relationship("Courier", back_populates="active_order")
